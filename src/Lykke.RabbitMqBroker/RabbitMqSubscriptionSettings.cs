@@ -12,6 +12,17 @@ namespace Lykke.RabbitMqBroker.Subscriber
         public bool IsDurable { get; set; }
         public string DeadLetterExchangeName { get; set; }
         public string RoutingKey { get; set; }
+
+        /// <summary>
+        /// Enable publisher acknowledgment. The default value is <see langword="true"/>.
+        /// </summary>
+        public bool ConfirmPublishing { get; set; } = true;
+
+        /// <summary>
+        ///  A wait timeout until all messages published will ack'd by the broker. The default value is 15 seconds.
+        /// </summary>
+        public TimeSpan PublishConfirmationTimeout { get; set; } = TimeSpan.FromSeconds(15);
+
         /// <summary>
         /// Default is 3 seconds
         /// </summary>
@@ -59,7 +70,7 @@ namespace Lykke.RabbitMqBroker.Subscriber
         /// <param name="connectionString"></param>
         /// <param name="nameOfSourceEndpoint">Endpoint's name, to which messages subscriber want to be subsribed, without "lykke" namespace</param>
         /// <param name="nameOfEndpoint">Subscribers's endpoint name, without "lykke" namepsace</param>
-        public static RabbitMqSubscriptionSettings CreateForSubscriber(string connectionString, 
+        public static RabbitMqSubscriptionSettings CreateForSubscriber(string connectionString,
             string nameOfSourceEndpoint, string nameOfEndpoint)
         {
             return CreateForSubscriber(connectionString, "lykke", nameOfSourceEndpoint, "lykke", nameOfEndpoint);
@@ -73,8 +84,8 @@ namespace Lykke.RabbitMqBroker.Subscriber
         /// <param name="nameOfSourceEndpoint">Endpoint's name, to which messages subscriber want to be subsribed</param>
         /// <param name="namespaceOfEndpoint">Subscriber's endpoint namesace</param>
         /// <param name="nameOfEndpoint">Subscribers's endpoint name</param>
-        public static RabbitMqSubscriptionSettings CreateForSubscriber(string connectionString, 
-            string namespaceOfSourceEndpoint, string nameOfSourceEndpoint, 
+        public static RabbitMqSubscriptionSettings CreateForSubscriber(string connectionString,
+            string namespaceOfSourceEndpoint, string nameOfSourceEndpoint,
             string namespaceOfEndpoint, string nameOfEndpoint)
         {
             return new RabbitMqSubscriptionSettings

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,11 +45,12 @@ namespace RabbitMqBrokerTests
 
             _subscriber.Start();
 
-            PublishToQueue(expected);
+            PublishToExchange(expected);
 
             completeLock.Wait();
             Assert.That(result, Is.EqualTo(expected));
         }
+
 
         [Test]
         public void ShouldUseDeadLetterQueueOnException()
@@ -61,7 +63,7 @@ namespace RabbitMqBrokerTests
             const string expected = "GetDefaultHost message";
 
             SetupNormalQueue();
-            PublishToQueue(expected);
+            PublishToExchange(expected);
 
             var completeLock = new ManualResetEventSlim(false);
             var handler = new Func<string, Task>(s =>
@@ -73,7 +75,7 @@ namespace RabbitMqBrokerTests
             _subscriber.Start();
 
             completeLock.Wait();
-            
+
             var result = ReadFromQueue(PoisonQueueName);
 
             Assert.That(result, Is.EqualTo(expected));
@@ -90,15 +92,18 @@ namespace RabbitMqBrokerTests
         }
 
 
-        private void PublishToQueue(string message)
+        private void PublishToExchange(params string[] messages)
         {
             var factory = new ConnectionFactory { Uri = RabbitConnectionString };
 
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                var body = Encoding.UTF8.GetBytes(message);
-                channel.BasicPublish(_settings.ExchangeName, _settings.RoutingKey, body: body);
+                foreach (var message in messages)
+                {
+                    var body = Encoding.UTF8.GetBytes(message);
+                    channel.BasicPublish(_settings.ExchangeName, _settings.RoutingKey, body: body);
+                }
             }
         }
 

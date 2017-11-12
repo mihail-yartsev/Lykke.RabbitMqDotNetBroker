@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Common;
 using Lykke.RabbitMqBroker.Publisher;
@@ -14,7 +16,7 @@ namespace RabbitMqBrokerTests
         [SetUp]
         public void SetUp()
         {
-
+            _settings.ConfirmPublishing = true;
             _publisher = new RabbitMqPublisher<string>(_settings);
 
             _publisher
@@ -40,6 +42,29 @@ namespace RabbitMqBrokerTests
             var result = ReadFromQueue();
 
             Assert.That(result, Is.EqualTo(expected));
+        }
+
+
+
+        [Test, Explicit]
+        public async Task BulkPublishing()
+        {
+            var expected = Enumerable.Repeat(1, 5000000).Select(r => Guid.NewGuid().ToString()).ToArray();
+            _publisher.PublishSynchronously();
+
+            _publisher.Start();
+
+            SetupNormalQueue();
+
+            foreach (var message in expected)
+            {
+                await _publisher.ProduceAsync(message);
+            }
+
+            //   var result = ReadFromQueue();
+
+            // Assert.That(result, Is.EqualTo(expected));
+
         }
 
         [Test]

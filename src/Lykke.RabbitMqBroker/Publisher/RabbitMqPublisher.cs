@@ -341,6 +341,10 @@ namespace Lykke.RabbitMqBroker.Publisher
             using (var connection = factory.CreateConnection(cn))
             using (var channel = connection.CreateModel())
             {
+                if (_settings.ConfirmPublishing)
+                {
+                    channel.ConfirmSelect();
+                }
                 _console?.WriteLine($"{Name}: connected to {_settings.ConnectionString} ({_settings.GetQueueOrExchangeName()})");
                 _publishStrategy.Configure(_settings, channel);
 
@@ -362,8 +366,16 @@ namespace Lykke.RabbitMqBroker.Publisher
                     }
 
                     _publishStrategy.Publish(_settings, channel, message);
+
+                    if (_settings.ConfirmPublishing && !channel.WaitForConfirms(_settings.PublishConfirmationTimeout))
+                    {
+                        throw new RabbitMqBrokerException($"An ack from the publisher has been not received within {_settings.PublishConfirmationTimeout.TotalSeconds} seconds. Reconnecting");
+                    }
+
                     if (_publishSynchronously)
+                    {
                         _publishLock.Set();
+                    }
 
                     _reconnectionsInARowCount = 0;
                 }
